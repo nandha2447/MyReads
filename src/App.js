@@ -104,8 +104,8 @@ componentDidMount(){
       if(value==="currentlyReading" || value==="wantToRead" || value==="read" ){
         console.log("one of the three values")
         this.updateAPI(id,value);
-        this.setState((currentState)=>{ 
-          allBooks: [...currentState.allBooks,Object.defineProperty(currentState.allBooks.filter(book=> book.id===id)[0],"shelf",{value})]
+        this.setState((currentState)=>{           
+          allBooks: [...currentState.allBooks,Object.defineProperty(currentState.allBooks.filter(book=> book.id===id)[0],"shelf",{value: value, configurable: true})]
         })
       }
       // The below code snippet is working just fine.
@@ -118,13 +118,13 @@ componentDidMount(){
       }
     }
 
-    if(id!==undefined && this.state.searchResults!==undefined && this.state.searchResults!==null){
+    if(id!==undefined && this.state.searchResults!==undefined && this.state.searchResults!==null && this.state.searchResults.length>0){
       console.log("we are inside search page");
-      if(value==="currentlyReading" || value==="wantToRead" || value==="read" ){      
+      if(value==="currentlyReading" || value==="wantToRead" || value==="read"){      
         console.log("going inside the value check");
-        this.setState((currentState)=>{ 
+        this.setState((currentState)=>({ 
           allBooks: [...currentState.allBooks,Object.defineProperty(currentState.searchResults.filter(book=> book.id===id)[0],"shelf",{value})]
-        })
+        }))
         this.updateAPI(id,value);
       }
       else if(value==="none"){
@@ -141,6 +141,12 @@ componentDidMount(){
     }
 }
 
+searchResultsClearHandler = () => {
+  this.setState(()=>({
+    searchResults: []
+  }))
+}
+
   render() {
     return (
       <div className="app">
@@ -153,7 +159,8 @@ componentDidMount(){
         <Route path='/create' render={()=> (
           <SearchPage searchResults={this.state.searchResults} 
                       displayBooksHandler={this.displayBooksHandler}
-                      onSelectChange={this.onSelectChange}/>
+                      onSelectChange={this.onSelectChange}
+                      searchResultsClearHandler={this.searchResultsClearHandler}/>
         )}/>
       </div>
     )
