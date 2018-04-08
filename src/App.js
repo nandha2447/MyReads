@@ -7,27 +7,11 @@ import {Route} from 'react-router-dom'
 
 class BooksApp extends React.Component {
   state = {
-    /**
-     * TODO: Instead of using this state variable to keep track of which page
-     * we're on, use the URL in the browser's address bar. This will ensure that
-     * users can use the browser's back and forward buttons to navigate between
-     * pages, as well as provide a good URL they can bookmark and share.
-     */
-    // currentlyReading: [],
-    // wantToRead: [],
-    // Read: [],
     allBooks: [],
     searchResults: []
   }
 
-  getAPIbyID = (id) => {
-    BooksAPI.get(id).then((particularBook)=>{
-      console.log("getAPIbyId",particularBook)
-    },()=>{
-      console.log("Stupid book didn't load");
-    })
-  }
-
+  //booksSyncHandler partially helps sync the state of the select dropdown of the same items in HomePage and SearchPage
   booksSyncHandler = () => {
     let allBooksIdentifiers = this.state.allBooks.map(book=>book.id);
         const searchResultsIdentifiers = this.state.searchResults.map(book=>book.id);
@@ -40,16 +24,15 @@ class BooksApp extends React.Component {
           return [allBooksIdentifiers,syncedBooks];
     }
   }
+
+  //displayBooksHandler is responsible for displaying books based on the search term in the Search Page
   displayBooksHandler = (e) => {
     const searchTerm = e.target.value;
     if(searchTerm){
       BooksAPI.search(searchTerm).then((res)=> {  
         const allBooksIdentifiers = this.booksSyncHandler()[0];
         const syncedBooks = this.booksSyncHandler()[1];
-        // 1 for fitness, 4 for artifical intelligence
-        console.log(syncedBooks)
         const modifiedResponse = syncedBooks.concat(res.filter(book => !allBooksIdentifiers.includes(book.id)));
-        console.log(modifiedResponse)
         this.setState((currentState)=>({
           searchResults: [...modifiedResponse]   
         }))
@@ -58,47 +41,35 @@ class BooksApp extends React.Component {
       })})
     }
     else if(!searchTerm){
-      console.log("empty the search page");
       this.setState(()=>({
         searchResults: []
       }))
     }
-}
+  }
 
-componentDidMount(){
-  console.log("Nandha da");
-  BooksAPI.getAll().then((book)=>{
-    console.log("allbooks",book)
-    this.setState({
-      allBooks: Array.from(book)
-      })
+  // Using React's lifecycle method to display the books on PageLoad
+  componentDidMount(){
+    BooksAPI.getAll().then((book)=>{
+      this.setState({
+        allBooks: Array.from(book)
+        })
     }, ()=> {this.setState({
-      allBooks: []
+        allBooks: []
     })})
   }
 
+  //updateAPI does exactly what it is supposed to do
   updateAPI = (id,value) => {
     BooksAPI.update({id},value).then((book)=>{
       console.log("API update success",book)
     },()=>{
-      console.log("failure")
+      console.log("API update failed")
     })
   }
 
-  getAPI = (id,value) => {
-    BooksAPI.get(id).then((particularBook)=>{
-      console.log("Stupid book",particularBook)
-      particularBook.shelf=value
-      console.log("Stupid book after shelving",particularBook)
-    },()=>{
-      console.log("Stupid book didn't load");
-    })
-  }
+  //onSelectChange is the handler for select dropdown for both pages(HomePage and SearchPage)
   onSelectChange = (e) =>{
-    const {id,value} = e.target;
-    console.log(id);
-    console.log(value)
-    //To check whether this is in homepage
+    const {id,value} = e.target;    
     if(id!==undefined && this.state.allBooks.filter(book => book.id===id).length>0){
       console.log("we are inside Home page")
       if(value==="currentlyReading" || value==="wantToRead" || value==="read" ){
@@ -108,7 +79,6 @@ componentDidMount(){
           allBooks: [...currentState.allBooks,Object.defineProperty(currentState.allBooks.filter(book=> book.id===id)[0],"shelf",{value: value, configurable: true})]
         })
       }
-      // The below code snippet is working just fine.
       else if(value==="none"){
         console.log("none");
         this.setState((currentState)=>({
@@ -117,7 +87,6 @@ componentDidMount(){
         this.updateAPI(id,"none");
       }
     }
-
     if(id!==undefined && this.state.searchResults!==undefined && this.state.searchResults!==null && this.state.searchResults.length>0){
       console.log("we are inside search page");
       if(value==="currentlyReading" || value==="wantToRead" || value==="read"){      
@@ -133,19 +102,14 @@ componentDidMount(){
         }))
         this.updateAPI(id,"none");
       }
-      // this.setState((currentState)=>({
-      //   // searchResults: [...currentState.searchResults,...currentState.allBooks]
-      //   allBooks: [...currentState.allBooks,searchResultBook]
-      // }))
-      
     }
-}
-
-searchResultsClearHandler = () => {
-  this.setState(()=>({
-    searchResults: []
-  }))
-}
+  }
+  //To clear searchResults array when user navigates back to HomePage
+  searchResultsClearHandler = () => {
+    this.setState(()=>({
+      searchResults: []
+    }))
+  }
 
   render() {
     return (
